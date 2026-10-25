@@ -1,18 +1,18 @@
 # TechPie Wear
 
-TechPie 穿戴端快应用（Xiaomi Vela QuickApp）仓库。一套源码，三个设备目标，通过 GitHub Actions 打包出可安装的 RPK。
+TechPie 穿戴端仓库，面向**所有穿戴设备**（不限于小米），后续会接入更多平台与厂商。当前包含 Xiaomi Vela 快应用实现：一套源码、多个设备目标，通过 GitHub Actions 打包出可安装的 RPK。
 
 ## 项目结构
 
 ```
-vela/
+vela/            Xiaomi Vela 快应用（当前实现）
 ├── band/         小米手环 7/8/9/10/11（单 rpk 多机型适配，designWidth 192）
 ├── band_pro/     小米手环 9 Pro（336×480，designWidth 336）
 ├── circle_watch/ 小米手表 S4 圆形表盘
 └── docs/         模拟器截图自验证等通用文档
 ```
 
-每个子项目都是独立的快应用工程：`src/` 源码、`sign/` 签名证书、`tool/verify_rpk.py` 签名校验脚本。
+其他平台/厂商的实现会以同级目录形式加入本仓库。每个子项目都是独立工程：`src/` 源码、`sign/` 签名证书、`tool/verify_rpk.py` 签名校验脚本。
 
 ## 构建产物（CI）
 
@@ -30,30 +30,27 @@ vela/
 
 ## 签名
 
-产物使用 **debug 签名**（`sign/debug` 密钥）打包：该签名与手机端 APK 配对，换成 release 签名必须连 APK 一起重签。要做正式 release 包，先处理 APK 侧再执行 `npm run release`。
+产物使用 **release 签名**（`sign/release` 密钥）打包：`npm run release`。注意签名与手机端 APK 的配对关系——更换签名方式需连 APK 一起重签。
 
-`sign/*/private.pem` 是签名私钥，**不入库**（仓库公开）。CI 通过仓库 Secrets 还原到 `sign/debug/` 和 `sign/release/`：
+`sign/*/private.pem` 是签名私钥，**不入库**（仓库公开）。CI 通过仓库 Secrets 还原到 `sign/release/`：
 
-- `SIGN_CERTIFICATE_PEM` — PEM 格式证书（`sign/debug/certificate.pem` 的内容）
-- `SIGN_PRIVATE_PEM` — PEM 格式私钥（`sign/debug/private.pem` 的内容）
+- `SIGN_CERTIFICATE_PEM` — PEM 格式证书（`sign/release/certificate.pem` 的内容）
+- `SIGN_PRIVATE_PEM` — PEM 格式私钥（`sign/release/private.pem` 的内容）
 
-配置一次即可（三个项目共用同一套密钥）：
+配置一次即可（三个项目共用同一套密钥），**CI 强制要求**：
 
 ```bash
-gh secret set SIGN_CERTIFICATE_PEM < vela/band/sign/debug/certificate.pem
-gh secret set SIGN_PRIVATE_PEM     < vela/band/sign/debug/private.pem
+gh secret set SIGN_CERTIFICATE_PEM < vela/band/sign/release/certificate.pem
+gh secret set SIGN_PRIVATE_PEM     < vela/band/sign/release/private.pem
 ```
-
-- **已配置 Secrets**：产物用应用自身 debug 密钥签名，APK 配对有效；CI 同时比对证书指纹。
-- **未配置 Secrets**：回退到 aiot-toolkit 内置 debug 证书（**与 APK 不配对**，仅供模拟器调试），CI 会给出 notice 提示。
 
 ## 本地构建
 
 ```bash
 cd vela/band          # 或 band_pro / circle_watch
 npm ci
-npm run build         # debug 包（APK 配对签名）→ dist/*.debug.<version>.rpk
-npm run release       # release 包 → dist/*.release.<version>.rpk（需 sign/release/ 私钥 + 重签手机 APK）
+npm run build         # debug 包 → dist/*.debug.<version>.rpk
+npm run release       # release 包（CI 同款）→ dist/*.release.<version>.rpk，需 sign/release/ 私钥
 npm start             # 起调试服务 + 模拟器
 ```
 

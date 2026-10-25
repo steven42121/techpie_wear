@@ -40,27 +40,22 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Restore signing keys
-        id: sign
         working-directory: vela/${{ matrix.project }}
         env:
           SIGN_CERTIFICATE_PEM: ${{ secrets.SIGN_CERTIFICATE_PEM }}
           SIGN_PRIVATE_PEM: ${{ secrets.SIGN_PRIVATE_PEM }}
         run: |
-          if [ -n "$SIGN_PRIVATE_PEM" ] && [ -n "$SIGN_CERTIFICATE_PEM" ]; then
-            mkdir -p sign/debug sign/release
-            printf '%s\n' "$SIGN_CERTIFICATE_PEM" | tee sign/debug/certificate.pem > sign/release/certificate.pem
-            printf '%s\n' "$SIGN_PRIVATE_PEM" | tee sign/debug/private.pem > sign/release/private.pem
-            echo "key=app" >> "$GITHUB_OUTPUT"
-            echo "signed with the app debug key (APK pairing preserved)"
-          else
-            echo "key=toolkit" >> "$GITHUB_OUTPUT"
-            echo "::notice::SIGN_CERTIFICATE_PEM / SIGN_PRIVATE_PEM secrets are not set - the rpk is signed with the aiot-toolkit default debug key and will NOT match the companion APK"
+          if [ -z "$SIGN_PRIVATE_PEM" ] || [ -z "$SIGN_CERTIFICATE_PEM" ]; then
+            echo "::error::SIGN_CERTIFICATE_PEM / SIGN_PRIVATE_PEM secrets are required to build release rpks"
+            exit 1
           fi
+          mkdir -p sign/release
+          printf '%s\n' "$SIGN_CERTIFICATE_PEM" > sign/release/certificate.pem
+          printf '%s\n' "$SIGN_PRIVATE_PEM" > sign/release/private.pem
 
-      # debug 签名（sign/debug 密钥）与手机端 APK 配对，换 release 签名需连 APK 一起重签
       - name: Build
         working-directory: vela/${{ matrix.project }}
-        run: npm run build
+        run: npm run release
 
       - name: Collect artifact
         run: |
@@ -74,12 +69,7 @@ jobs:
           ls -l "${{ matrix.output }}"
 
       - name: Verify RPK signature
-        run: |
-          if [ "${{ steps.sign.outputs.key }}" = "app" ]; then
-            python3 vela/${{ matrix.project }}/tool/verify_rpk.py "${{ matrix.output }}" vela/${{ matrix.project }}/sign/debug/certificate.pem
-          else
-            python3 vela/${{ matrix.project }}/tool/verify_rpk.py "${{ matrix.output }}"
-          fi
+        run: python3 vela/${{ matrix.project }}/tool/verify_rpk.py "${{ matrix.output }}" vela/${{ matrix.project }}/sign/release/certificate.pem
 
       - uses: actions/upload-artifact@v4
         with:
