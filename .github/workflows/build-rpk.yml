@@ -3,9 +3,7 @@ name: Build RPK
 on:
   push:
     branches: [main]
-    paths:
-      - 'vela/**'
-      - '.github/workflows/build-rpk.yml'
+    tags: ['v*']
   pull_request:
     paths:
       - 'vela/**'
