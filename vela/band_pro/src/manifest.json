@@ -1,0 +1,41 @@
+{
+  "package": "club.geekpie.techpie",
+  "name": "TechPie",
+  "versionName": "0.15.30",
+  "versionCode": 78,
+  "minPlatformVersion": 1200,
+  "icon": "/common/logo.png",
+  "deviceTypeList": [
+    "watch"
+  ],
+  "features": [
+    {
+      "name": "system.brightness"
+    },
+    {
+      "name": "system.file"
+    },
+    {
+      "name": "system.interconnect"
+    },
+    {
+      "name": "system.router"
+    },
+    {
+      "name": "system.storage"
+    }
+  ],
+  "config": {
+    "logLevel": "log",
+    "designWidth": 336
+  },
+  "router": {
+    "entry": "pages/index",
+    "pages": {
+      "pages/index": {
+        "component": "index"
+      }
+    }
+  },
+  "minAPILevel": 1
+}

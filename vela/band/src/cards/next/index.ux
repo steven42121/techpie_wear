@@ -1,0 +1,50 @@
+<template>
+  <div class="card">
+    <text class="label" static>下节课</text>
+    <text class="name">{{ title }}</text>
+    <text class="time">{{ time }}</text>
+  </div>
+</template>
+
+<style>
+.card {
+  width: 192px;
+  height: 192px;
+  flex-direction: column;
+  justify-content: center;
+  background-color: #000000;
+  border-radius: 24px;
+}
+
+.label {
+  margin-left: 16px;
+  font-size: 22px;
+  color: #8e8e93;
+}
+
+.name {
+  width: 160px;
+  margin-left: 16px;
+  margin-top: 6px;
+  font-size: 28px;
+  color: #ffffff;
+  lines: 2;
+  text-overflow: ellipsis;
+}
+
+.time {
+  margin-left: 16px;
+  margin-top: 6px;
+  font-size: 22px;
+  color: #4c9aff;
+}
+</style>
+
+<script>
+export default {
+  private: {
+    title: '等待同步',
+    time: '--:--'
+  }
+}
+</script>

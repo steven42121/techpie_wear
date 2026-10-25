@@ -1,0 +1,1399 @@
+<template>
+  <div class="page">
+    <div class="head">
+      <text class="brand" static>TechPie</text>
+      <text class="conn {{ connOk ? 'ok' : 'bad' }}">{{ connText }}</text>
+    </div>
+
+    <div class="sync-row">
+      <div class="sync-btn" @click="syncCurrent">
+        <text class="btn-text">{{ syncLabel }}</text>
+      </div>
+    </div>
+
+    <swiper class="swiper" indicator="false" loop="false" index="1" onchange="onPageChange">
+      <div class="panel exit-panel" static></div>
+
+      
+
+      <div class="panel">
+        <!-- 课表页 -->
+        <text class="section-title">{{ dayLabel }}</text>
+        <div class="day-actions">
+          <div class="btn small" @click="prevDay">
+            <text class="btn-text" static>前一天</text>
+          </div>
+          <div class="btn small right" @click="nextDay">
+            <text class="btn-text" static>后一天</text>
+          </div>
+        </div>
+        <scroll class="panel-scroll" scroll-y="true">
+          <div class="rows">
+            <div class="row {{ $item.st }}" for="courses">
+              <text class="row-name">{{ $item.t2 }}</text>
+              <text class="row-sub">{{ $item.sub }}</text>
+            </div>
+          </div>
+        </scroll>
+      </div>
+
+      <div class="panel qr-panel">
+        <div class="qr-box">
+          <image class="qr" if="{{ qrPath !== '' }}" src="{{ qrPath }}"></image>
+          <text class="qr-hint" if="{{ qrPath === '' && !signing }}">{{ qrHint }}</text>
+          <text class="qr-hint" if="{{ signing }}">{{ signLabel }}</text>
+        </div>
+        <div class="qr-actions">
+          <div class="btn wide {{ signing ? 'busy' : '' }}" @click="qrAction">
+            <text class="btn-text">{{ signBtnLabel }}</text>
+          </div>
+        </div>
+        <text class="qr-meta">{{ qrMeta }}</text>
+      </div>
+
+      <div class="panel">
+        <!-- 作业页 -->
+        <text class="section-title">{{ assignmentLabel }}</text>
+        <scroll class="panel-scroll" scroll-y="true">
+          <div class="rows">
+            <div class="row {{ $item.st }}" for="assignments">
+              <text class="row-name">{{ $item.t2 }}</text>
+              <text class="row-sub">{{ $item.sub }}</text>
+            </div>
+          </div>
+        </scroll>
+      </div>
+    </swiper>
+
+    <div class="dots">
+      <div class="dot-slot">
+        <div class="dot-solid" if="{{ page === 1 }}"></div>
+        <div class="dot-hollow" if="{{ page !== 1 }}"></div>
+      </div>
+      <div class="dot-slot">
+        <div class="dot-solid" if="{{ page === 2 }}"></div>
+        <div class="dot-hollow" if="{{ page !== 2 }}"></div>
+      </div>
+      <div class="dot-slot">
+        <div class="dot-solid" if="{{ page === 3 }}"></div>
+        <div class="dot-hollow" if="{{ page !== 3 }}"></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+.page {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  background-color: #000000;
+}
+
+.head {
+  width: 176px;
+  margin-top: 30px;
+  margin-bottom: 5px;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* 品牌标识 */
+.brand {
+  width: 176px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  font-size: 24px;
+  color: #8e8e93;
+}
+
+/* 连接状态 */
+
+.conn {
+  width: 176px;
+  height: 26px;
+  line-height: 26px;
+  margin-top: 2px;
+  text-align: center;
+  font-size: 20px;
+}
+
+.conn.ok {
+  color: #4c9aff;
+}
+
+.conn.bad {
+  color: #8e8e93;
+}
+
+.sync-row {
+  width: 184px;
+  height: 44px;
+  margin-top: 8px;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.sync-btn {
+  width: 184px;
+  height: 44px;
+  border-radius: 14px;
+  background-color: #2c2c2e;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.btn-text {
+  font-size: 22px;
+  color: #ffffff;
+}
+
+.swiper {
+  width: 100%;
+  flex-grow: 1;
+  margin-top: 8px;
+}
+
+.exit-panel {
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+}
+
+.panel {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+}
+
+.section-title {
+  width: 176px;
+  height: 28px;
+  text-align: center;
+  font-size: 22px;
+  color: #8e8e93;
+  flex-shrink: 0;
+}
+
+.day-actions {
+  width: 184px;
+  height: 44px;
+  margin-top: 6px;
+  flex-direction: row;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn.small {
+  width: 88px;
+  height: 44px;
+  border-radius: 14px;
+  background-color: #1c1c1e;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.btn.small.right {
+  margin-left: 8px;
+  position: relative;
+  left: -2px;
+}
+
+.panel-scroll {
+  width: 184px;
+  flex-grow: 1;
+  margin-top: 6px;
+  flex-direction: column;
+}
+
+.rows {
+  width: 184px;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 22px;
+}
+
+.qr-panel {
+  justify-content: center;
+}
+
+.qr-box {
+  width: 184px;
+  height: 224px;
+  padding-top: 22px;
+  border-radius: 16px;
+  background-color: #ffffff;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* 二维码图片 */
+.qr {
+  width: 180px;
+  height: 180px;
+}
+
+.qr-hint {
+  width: 160px;
+  margin-top: 8px;
+  font-size: 20px;
+  color: #636366;
+  text-align: center;
+  lines: 2;
+}
+
+/* 二维码操作按钮 */
+.qr-actions {
+  width: 184px;
+  height: 44px;
+  margin-top: 6px;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.btn.wide {
+  width: 184px;
+  height: 44px;
+  border-radius: 14px;
+  background-color: #1c1c1e;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+  left: -2px;
+}
+
+.btn.wide.busy {
+  background-color: #2c2c2e;
+}
+
+.qr-meta {
+  margin-top: 2px;
+  height: 18px;
+  font-size: 18px;
+  color: #8e8e93;
+}
+
+/* 课程/作业行 */
+.row {
+  width: 184px;
+  height: 140px;
+  margin-top: 6px;
+  border-radius: 29px; /* 课程/作业行圆角 */
+  background-color: #1c1c1e;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0; /* 防止滚动时被压缩 */
+}
+
+.row.ongoing {
+  background-color: #2c2c2e;
+}
+
+/* 课程/作业行文本 */
+.row-name {
+  width: 170px;
+  font-size: 26px;
+  color: #ffffff;
+  font-weight: bold;
+  line-height: 35px;
+  lines: 2;
+}
+
+.row-sub {
+  width: 170px;
+  font-size: 22px;
+  color: #a1a1a6;
+  line-height: 30px;
+  lines: 2;
+}
+
+.dots {
+  width: 176px;
+  height: 14px;
+  margin-top: 6px;
+  margin-bottom: 14px;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.dot-slot {
+  width: 14px;
+  height: 14px;
+  justify-content: center;
+  align-items: center;
+}
+
+.dot-solid {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: #4c9aff;
+}
+
+.dot-hollow {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  border: 1px solid #636366;
+}
+
+/* 宽屏手环（106dp 一类，如 212×520）px 随屏宽放大 1.1 倍会显字偏大，
+   缩小字号贴近 192 屏观感；96dp 手环（7/8/9）不命中，保持原样 */
+@media (min-width: 100) {
+  .brand {
+    font-size: 20px;
+  }
+
+  .conn {
+    font-size: 16px;
+  }
+
+  .btn-text {
+    font-size: 18px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .qr-hint {
+    font-size: 16px;
+  }
+
+  .qr-meta {
+    font-size: 14px;
+  }
+
+  .row-name {
+    font-size: 21px;
+    line-height: 29px;
+  }
+
+  .row-sub {
+    font-size: 18px;
+    line-height: 25px;
+  }
+}
+</style>
+
+<script>
+import interconnect from '@system.interconnect'
+import file from '@system.file'
+import brightness from '@system.brightness'
+import storage from '@system.storage'
+import router from '@system.router'
+
+const TEST_DATA = false // 测试数据开关：出真包前改 false
+
+// 加密/二维码模块体积大，推迟到首次生成离线码时再加载（启动优化）。
+let cryptoKit = null
+function ensureCrypto() {
+  if (!cryptoKit) {
+    const sm2pkg = require('../../common/sm2.js')
+    cryptoKit = {
+      sm2: sm2pkg.makeSm2(sm2pkg.CONSTS),
+      qr: require('../../common/qr.js'),
+      png: require('../../common/png.js')
+    }
+  }
+  return cryptoKit
+}
+
+// base64 查表只建一次，避免每张二维码都重建映射。
+const B64_MAP = (() => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  const map = {}
+  for (let i = 0; i < chars.length; i++) {
+    map[chars.charAt(i)] = i
+  }
+  return map
+})()
+
+const WEEK_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
+const pad2 = (n) => ('0' + n).slice(-2)
+
+// 分片消息类型白名单：新增可分片协议时需同步。不限类型时，对端可用任意
+// t 造出无上限的分片缓存（chunkParts[kind]），拖垮手环内存。
+const CHUNK_KINDS = {
+  'ecard.snap.chunk': 1,
+  'offline.cred.chunk': 1,
+  'schedule.week.chunk': 1,
+  'schedule.snap.chunk': 1,
+  'assignments.snap.chunk': 1
+}
+
+export default {
+  // 仅 UI 绑定的数据放在 private（响应式视图模型）。
+  private: {
+    connOk: false,
+    connText: '未连接',
+    page: 1,
+    syncLabel: '同步',
+    courses: [{ t2: '尚未同步课表\n', sub: '手机端 TechPie 在线时自动同步', st: 'empty' }],
+    assignments: [{ t2: '尚未同步作业\n', sub: '连接手机后点同步', st: 'empty' }],
+    assignmentLabel: '作业',
+    dayLabel: '今天',
+    qrPath: '',
+    signing: false,
+    signLabel: '',
+    signBtnLabel: '生成离线码',
+    qrHint: '滑到本页自动获取',
+    qrMeta: ''
+  },
+  onInit() {
+    // 非 UI 状态挂在实例普通属性上，不进响应式视图模型（减少 diff 开销）。
+    this.conn = null
+    this.timers = []
+    this.weekMap = {}
+    this.chunkParts = {}
+    this.qrParts = {}
+    this.qrSeq = 0
+    this.savedBrightness = null
+    this.savedMode = null
+    this.brightnessToken = 0
+    this.logText = ''
+    this.cred = null
+    this.signJob = null
+    this.signCount = 0
+    this.signMessageHex = ''
+    this.signStartedAt = 0
+    this.dayOffset = 0
+    this.synced = false
+    this.courseCount = 0
+    this.assignmentCount = 0
+    this.emptyTitle = '尚未同步课表\n'
+    this.emptySub = '手机端 TechPie 在线时自动同步'
+    this.assignEmptyTitle = '尚未同步作业\n'
+    this.assignEmptySub = '连接手机后点同步'
+    try {
+      this.loadCred()
+      this.createConn()
+      this.checkState()
+      if (TEST_DATA) {
+        this.seedTestData()
+      } else {
+        this.requestSchedule(true)
+      }
+    } catch (e) {
+      this.log('初始化异常: ' + e)
+    }
+  },
+  seedTestData() {
+    const days = []
+    for (let d = -2; d <= 3; d++) {
+      days.push({
+        date: this.dateKey(d),
+        courses: [
+          { n: '高等数学A', loc: '教学楼A301', s: '08:00', e: '09:40', st: 'past' },
+          { n: '大学物理实验超长课程名称测试两行换行效果', loc: '理科实验楼B205', s: '10:00', e: '11:40', st: 'ongoing' },
+          { n: '英语听说', loc: '外语楼101', s: '14:00', e: '15:40', st: 'upcoming' },
+          { n: '数据结构', loc: '信息楼401', s: '16:00', e: '17:40', st: 'upcoming' }
+        ]
+      })
+    }
+    this.applyWeek({ t: 'schedule.week', days: days }, true)
+    this.applyAssignments({
+      t: 'assignments.snap',
+      items: [
+        { title: '线性代数第三章习题很长的标题测试两行显示', course: '线性代数', kind: '作业', due: '10-26 23:59', left: '明天' },
+        { title: '物理实验报告', course: '大学物理', kind: '报告', due: '10-27 18:00', left: '后天' },
+        { title: '英语作文 My Campus Life', course: '英语', kind: '作文', due: '10-28 23:59', left: '10-28' },
+        { title: '数据结构课程设计', course: '数据结构', kind: '项目', due: '11-01 23:59', left: '11-01' }
+      ]
+    }, true)
+    this.log('已载入测试数据')
+  },
+  createConn() {
+    const conn = interconnect.instance()
+    this.conn = conn
+    conn.onopen = (res) => {
+      // 断线期间的分片缓存已无意义，连接重置时清掉。
+      this.chunkParts = {}
+      this.qrParts = {}
+      this.setConnected(true)
+      this.log(res.isReconnected ? '已重新连接' : '已连接手机端')
+      this.syncCurrent()
+    }
+    conn.onclose = () => {
+      this.chunkParts = {}
+      this.qrParts = {}
+      this.setConnected(false)
+      this.log('连接已断开')
+    }
+    conn.onerror = (res) => {
+      this.setConnected(false)
+      this.log('连接出错 code=' + res.code)
+    }
+    conn.onmessage = (res) => {
+      try {
+        const text = typeof res.data === 'string' ? res.data : String(res.data)
+        if (text.indexOf('"t":"offline.cred"') >= 0) {
+          this.log('收到: [离线凭证]')
+        } else {
+          this.log('收到: ' + text)
+        }
+        this.handleMessage(res.data)
+      } catch (e) {
+        this.log('消息处理异常: ' + e)
+      }
+    }
+  },
+  onPageChange(e) {
+    let index = 1
+    if (e && typeof e.index === 'number') {
+      index = e.index
+    } else if (e && e.detail && typeof e.detail.index === 'number') {
+      index = e.detail.index
+    }
+    if (index === 0) {
+      this.exitApp()
+      return
+    }
+    this.enterPage(index)
+  },
+  exitApp() {
+    try {
+      router.back()
+    } catch (e) {
+      this.log('退出失败')
+    }
+  },
+  enterPage(index) {
+    this.page = index
+    this.scheduleBrightness(index === 2)
+    if (index === 1) {
+      this.requestSchedule(false)
+    } else if (index === 2) {
+      this.qrEnter()
+    } else if (index === 3) {
+      this.requestAssignments(false)
+    }
+    this.log('切到第' + index + '页')
+  },
+  qrEnter() {
+    // 预热加密模块：60KB require + comb 点表构建挪到滑页动画后，
+    // 首次点「生成离线码」不再额外卡一拍（UI 先行）。
+    this.later(() => {
+      try {
+        ensureCrypto()
+      } catch (e) {}
+    }, 300)
+    if (this.cred) {
+      if (this.qrPath === '') {
+        this.qrHint = this.credExpired()
+          ? '离线授权已过期，请在手机续期'
+          : '点按下方按钮生成离线码'
+      }
+      if (this.qrMeta === '') {
+        this.qrMeta = this.credExpiryText()
+      }
+      return
+    }
+    this.requestEcard()
+  },
+  credExpired() {
+    const exp = this.cred ? this.cred.expiresAt : 0
+    return typeof exp === 'number' && exp < Math.floor(Date.now() / 1000)
+  },
+  credExpiryText() {
+    const exp = this.cred ? this.cred.expiresAt : 0
+    if (typeof exp !== 'number' || exp <= 0) {
+      return ''
+    }
+    const d = new Date(exp * 1000)
+    return '授权至 ' + d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())
+  },
+  collectParts(store, msg, onDone) {
+    if (typeof msg.total !== 'number' || typeof msg.seq !== 'number' ||
+        msg.total !== Math.floor(msg.total) || msg.seq !== Math.floor(msg.seq) ||
+        msg.total < 1 || msg.total > 200 ||
+        msg.seq < 0 || msg.seq >= msg.total ||
+        typeof msg.data !== 'string' || msg.data.length > 65536) {
+      return
+    }
+    store[msg.seq] = msg.data
+    if (Object.keys(store).length < msg.total) {
+      return
+    }
+    const keys = Object.keys(store).sort((a, b) => a - b)
+    let joined = ''
+    for (let i = 0; i < keys.length; i++) {
+      const part = store[keys[i]]
+      delete store[keys[i]]
+      if (joined.length + part.length > 524288) {
+        this.log('分片包过大，已丢弃')
+        return
+      }
+      joined += part
+    }
+    onDone(joined)
+  },
+  handleMessage(raw, fromChunk) {
+    let msg = null
+    try {
+      msg = JSON.parse(raw)
+    } catch (e) {
+      return
+    }
+    if (!msg) {
+      return
+    }
+    if (msg.t === 'ping') {
+      this.conn.send({ data: { t: 'pong', ts: Date.now() } })
+      this.log('链路正常')
+      return
+    }
+    if (msg.t === 'pong') {
+      this.log('链路正常')
+      return
+    }
+    if (msg.t === 'ecard.snap') {
+      this.qrPath = ''
+      this.qrHint = msg.error || '暂无消费码'
+      if (msg.error) {
+        this.log(msg.error)
+      }
+      return
+    }
+    if (msg.t === 'ecard.chunk') {
+      // 重组出来的载荷是完整消息，不允许再套分片（防递归嵌套炸弹）。
+      if (fromChunk) {
+        return
+      }
+      this.collectParts(this.qrParts, msg, (joined) => this.saveQr(joined))
+      return
+    }
+    if (typeof msg.t === 'string' && msg.t.substring(msg.t.length - 6) === '.chunk') {
+      if (fromChunk) {
+        return
+      }
+      const kind = msg.t
+      if (!CHUNK_KINDS[kind]) {
+        return
+      }
+      if (!this.chunkParts[kind]) {
+        this.chunkParts[kind] = {}
+      }
+      this.collectParts(this.chunkParts[kind], msg, (joined) => this.handleMessage(joined, true))
+      return
+    }
+    if (msg.t === 'offline.cred.clear') {
+      this.clearCred()
+      return
+    }
+    if (msg.t === 'offline.cred') {
+      if (msg.error) {
+        this.qrPath = ''
+        this.qrHint = msg.error
+        this.signBtnLabel = '同步授权'
+        this.log('凭证同步失败: ' + msg.error)
+        return
+      }
+      this.saveCred(msg)
+      return
+    }
+    if (msg.t === 'schedule.week') {
+      if (msg.error) {
+        this.log('课表同步失败: ' + msg.error)
+        return
+      }
+      this.applyWeek(msg, false)
+      return
+    }
+    if (msg.t === 'schedule.snap') {
+      if (msg.error) {
+        this.log('课表同步失败: ' + msg.error)
+        return
+      }
+      this.applySchedule(msg)
+      return
+    }
+    if (msg.t === 'assignments.snap') {
+      if (msg.error) {
+        this.log('作业同步失败: ' + msg.error)
+        return
+      }
+      this.applyAssignments(msg, false)
+    }
+  },
+  setConnected(ok) {
+    this.connOk = ok
+    this.connText = ok ? '已连接' : '未连接'
+  },
+  checkState() {
+    if (!this.conn) {
+      return
+    }
+    this.conn.getReadyState({
+      success: (data) => {
+        this.setConnected(data.status === 1)
+      },
+      fail: () => {
+        this.setConnected(false)
+      }
+    })
+  },
+  scheduleBrightness(boost) {
+    this.brightnessToken += 1
+    const token = this.brightnessToken
+    if (boost) {
+      // 等滑页动画结束再调系统亮度，避免与页面切换竞争。
+      this.later(() => {
+        if (token !== this.brightnessToken || this.page !== 2) {
+          return
+        }
+        this.boostBrightness(token)
+      }, 500)
+    } else {
+      this.restoreBrightness()
+    }
+  },
+  boostBrightness(token) {
+    if (!brightness) {
+      return
+    }
+    // 异步回调回来时若已切页/新会话已开始，一律放弃：
+    // 防止把提亮后的 255 误记成「原亮度」，导致恢复时把用户亮度永久锁在 255。
+    const alive = () => token === this.brightnessToken && this.page === 2
+    brightness.getMode({
+      success: (modeRes) => {
+        if (!alive()) {
+          return
+        }
+        const mode = modeRes && typeof modeRes.mode === 'number' ? modeRes.mode : 0
+        brightness.getValue({
+          success: (res) => {
+            if (!alive()) {
+              return
+            }
+            if (this.savedBrightness === null) {
+              this.savedBrightness = res.value
+              this.savedMode = mode
+            }
+            if (mode === 1) {
+              brightness.setMode({ mode: 0 })
+              this.later(() => {
+                if (alive()) {
+                  brightness.setValue({ value: 255 })
+                }
+              }, 300)
+            } else {
+              brightness.setValue({ value: 255 })
+            }
+          },
+          fail: () => {}
+        })
+      },
+      fail: () => {}
+    })
+  },
+  restoreBrightness(immediate) {
+    if (!brightness) {
+      return
+    }
+    if (this.savedBrightness === null) {
+      return
+    }
+    const value = this.savedBrightness
+    const mode = this.savedMode
+    this.savedBrightness = null
+    this.savedMode = null
+    const token = this.brightnessToken
+    brightness.setValue({ value })
+    if (mode === 1) {
+      // 自动亮度延后恢复，让手动值先生效；若用户又切回消费码页开始新会话则放弃。
+      const applyAuto = () => {
+        if (this.brightnessToken !== token) {
+          return
+        }
+        brightness.setMode({ mode: 1 })
+      }
+      if (immediate) {
+        applyAuto()
+      } else {
+        this.later(applyAuto, 300)
+      }
+    }
+  },
+  onHide() {
+    this.restoreBrightness()
+  },
+  onDestroy() {
+    // immediate：销毁会 clearTimers，延时恢复会被吃掉，退出时直接恢复自动亮度。
+    this.restoreBrightness(true)
+    this.clearTimers()
+    // 退出时清掉内存中的私钥与签名任务；凭证本身留在 storage，下次启动再载入。
+    this.signJob = null
+    this.cred = null
+    this.maybeGC()
+  },
+  applySchedule(msg) {
+    const list = this.decorateCourses(msg.courses || [])
+    this.courseCount = list.length
+    this.synced = true
+    this.emptyTitle = this.courseCount === 0 ? '今日无课\n' : '尚未同步课表\n'
+    this.emptySub = this.courseCount === 0 ? '换一天看看' : '手机端 TechPie 在线时自动同步'
+    this.courses = this.presentRows(list, this.emptyTitle, this.emptySub)
+    this.updateDayLabel()
+    this.log('已同步 ' + this.courseCount + ' 节课')
+  },
+  applyAssignments(msg, fromCache) {
+    const list = this.decorateAssignments(msg.items || [])
+    this.assignmentCount = list.length
+    this.assignEmptyTitle = '暂无待交作业\n'
+    this.assignEmptySub = '截止前一天提醒'
+    this.assignmentLabel = '作业 · ' + this.assignmentCount + '项'
+    this.assignments = this.presentRows(list, this.assignEmptyTitle, this.assignEmptySub)
+    if (fromCache) {
+      this.log('使用缓存作业')
+    } else {
+      this.saveCache('cache_assignments', msg)
+      this.log('已同步 ' + this.assignmentCount + ' 项作业')
+    }
+  },
+  presentRows(list, title, sub) {
+    if (list.length > 0) {
+      return list.slice()
+    }
+    return [{ t2: title, sub: sub, st: 'empty' }]
+  },
+  decorateRows(list, titleOf, subOf, stOf) {
+    const out = []
+    for (let i = 0; i < list.length; i++) {
+      out.push({
+        t2: titleOf(list[i]) + '\n',
+        sub: subOf(list[i]),
+        st: stOf ? stOf(list[i]) : ''
+      })
+    }
+    return out
+  },
+  decorateCourses(list) {
+    return this.decorateRows(
+      list,
+      (c) => c.n,
+      (c) => c.s + '-' + c.e + ' · ' + c.loc,
+      (c) => c.st
+    )
+  },
+  decorateAssignments(list) {
+    return this.decorateRows(
+      list,
+      (a) => a.title,
+      (a) => a.left + ' · ' + a.course + ' · ' + a.due
+    )
+  },
+  applyWeek(msg, fromCache) {
+    const map = {}
+    const days = msg.days || []
+    for (let i = 0; i < days.length; i++) {
+      map[days[i].date] = this.decorateCourses(days[i].courses || [])
+    }
+    this.weekMap = map
+    this.synced = true
+    this.renderDay()
+    if (fromCache) {
+      this.log('使用缓存课表')
+    } else {
+      this.saveCache('cache_schedule_week', msg)
+      this.log('已同步 ' + days.length + ' 天课表')
+    }
+    // 数据到达后的首次界面更新会被运行时吞掉，补一次重绘（等效手动翻页）。
+    this.later(() => {
+      this.renderDay()
+    }, 100)
+  },
+  dayDate(offset) {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset)
+  },
+  dateKey(offset) {
+    const t = this.dayDate(offset)
+    return t.getFullYear() + '-' + pad2(t.getMonth() + 1) + '-' + pad2(t.getDate())
+  },
+  renderDay() {
+    const list = this.weekMap[this.dateKey(this.dayOffset)] || []
+    this.courseCount = list.length
+    if (this.synced && this.courseCount === 0) {
+      this.emptyTitle = this.dayOffset === 0 ? '今日无课\n' : '当日无课\n'
+      this.emptySub = '换一天看看'
+    } else {
+      this.emptyTitle = '尚未同步课表\n'
+      this.emptySub = '手机端 TechPie 在线时自动同步'
+    }
+    this.courses = this.presentRows(list, this.emptyTitle, this.emptySub)
+    this.updateDayLabel()
+  },
+  loadFresh(key, maxAge, cb) {
+    if (!storage) {
+      cb(null)
+      return
+    }
+    storage.get({
+      key,
+      success: (data) => {
+        try {
+          const obj = typeof data === 'string' ? JSON.parse(data) : data
+          if (obj && typeof obj.at === 'number' &&
+              Date.now() - obj.at < maxAge && obj.msg) {
+            cb(obj.msg)
+          } else {
+            cb(null)
+          }
+        } catch (e) {
+          cb(null)
+        }
+      },
+      fail: () => {
+        cb(null)
+      }
+    })
+  },
+  saveCache(key, msg) {
+    if (!storage) {
+      return
+    }
+    try {
+      storage.set({
+        key,
+        value: JSON.stringify({ at: Date.now(), msg: msg })
+      })
+    } catch (e) {}
+  },
+  syncCurrent() {
+    if (this.page === 2) {
+      this.requestEcard()
+    } else if (this.page === 3) {
+      this.requestAssignments(true)
+    } else {
+      this.requestSchedule(true)
+    }
+  },
+  requestSnapshot(force, opts) {
+    const send = () => {
+      if (!this.conn) {
+        return
+      }
+      this.conn.send({
+        data: opts.req,
+        success: () => {
+          this.log('正在同步' + opts.name + '…')
+        },
+        fail: (data, code) => {
+          this.setConnected(false)
+          this.log(opts.name + '请求失败 code=' + code)
+        }
+      })
+    }
+    // 先上屏 TTL 内的本地数据；强制刷新（进入程序/点同步）再发一次请求。
+    this.loadFresh(opts.cacheKey, opts.ttl, (cached) => {
+      if (cached && opts.apply(cached, true)) {
+        if (!force) {
+          return
+        }
+      }
+      send()
+    })
+  },
+  requestSchedule(force) {
+    this.requestSnapshot(force, {
+      name: '课表',
+      req: { t: 'schedule.req', date: this.dateKey(this.dayOffset), week: true },
+      cacheKey: 'cache_schedule_week',
+      ttl: 604800000,
+      apply: (cached) => {
+        if (!cached.days) {
+          return false
+        }
+        this.applyWeek(cached, true)
+        return true
+      }
+    })
+  },
+  requestAssignments(force) {
+    this.requestSnapshot(force, {
+      name: '作业',
+      req: { t: 'assignments.req' },
+      cacheKey: 'cache_assignments',
+      ttl: 86400000,
+      apply: (cached) => {
+        this.applyAssignments(cached, true)
+        return true
+      }
+    })
+  },
+  requestEcard() {
+    if (!this.conn) {
+      return
+    }
+    this.qrParts = {}
+    this.conn.send({
+      data: { t: 'ecard.req' },
+      success: () => {
+        this.log('正在获取消费码…')
+      },
+      fail: (data, code) => {
+        this.setConnected(false)
+        this.log('消费码请求失败 code=' + code)
+      }
+    })
+  },
+  saveQr(base64) {
+    // 手环内存有限：异常超长的消费码数据直接拒掉，避免撑爆解码缓冲。
+    if (typeof base64 !== 'string' || base64.length > 131072) {
+      this.qrHint = '消费码数据异常'
+      this.log('消费码数据异常')
+      return
+    }
+    try {
+      const bytes = this.decodeBase64(base64)
+      this.writeQrFile(bytes, (uri) => {
+        this.qrPath = uri
+        this.log('消费码已更新')
+      }, (code) => {
+        this.qrHint = '写入二维码失败 ' + code
+        this.log(this.qrHint)
+      })
+    } catch (e) {
+      this.qrHint = '二维码解码失败'
+      this.log(this.qrHint)
+    }
+  },
+  writeQrFile(bytes, onDone, onFail) {
+    this.qrSeq = (this.qrSeq + 1) % 2
+    const uri = 'internal://cache/techpie-qr-' + this.qrSeq + '.png'
+    file.writeArrayBuffer({
+      uri,
+      buffer: bytes,
+      success: () => {
+        onDone(uri)
+        this.maybeGC()
+      },
+      fail: (data, code) => onFail(code)
+    })
+  },
+  decodeBase64(input) {
+    const map = B64_MAP
+    const cleaned = input.replace(/[^A-Za-z0-9+/]/g, '')
+    const length = cleaned.length
+    const out = new Uint8Array(Math.floor(length * 3 / 4))
+    let offset = 0
+    for (let i = 0; i < length; i += 4) {
+      const a = map[cleaned.charAt(i)] || 0
+      const b = map[cleaned.charAt(i + 1)] || 0
+      const c = map[cleaned.charAt(i + 2)] || 0
+      const d = map[cleaned.charAt(i + 3)] || 0
+      out[offset++] = (a << 2) | (b >> 4)
+      if (i + 2 < length) {
+        out[offset++] = ((b & 15) << 4) | (c >> 2)
+      }
+      if (i + 3 < length) {
+        out[offset++] = ((c & 3) << 6) | d
+      }
+    }
+    return out.subarray(0, offset)
+  },
+  prevDay() {
+    this.dayOffset -= 1
+    this.renderDay()
+    if (!this.synced) {
+      this.requestSchedule(false)
+    }
+  },
+  nextDay() {
+    this.dayOffset += 1
+    this.renderDay()
+    if (!this.synced) {
+      this.requestSchedule(false)
+    }
+  },
+  updateDayLabel() {
+    let base = WEEK_NAMES[this.dayDate(this.dayOffset).getDay()]
+    if (this.dayOffset === 0) {
+      base = '今天'
+    } else if (this.dayOffset === 1) {
+      base = '明天'
+    } else if (this.dayOffset === -1) {
+      base = '昨天'
+    }
+    this.dayLabel = base + ' · ' + this.courseCount + '节'
+  },
+  // 凭证字段校验：只收 hex 且限长，挡住异常/伪造载荷撑爆内存与签名缓冲。
+  validCred(obj) {
+    const hex = (s, max) => typeof s === 'string' && s.length > 0 &&
+      s.length <= max && /^[0-9a-fA-F]+$/.test(s)
+    return !!obj && hex(obj.privateKey, 128) && hex(obj.pubX, 128) &&
+      hex(obj.pubY, 128) && hex(obj.authorInfo, 4096) &&
+      typeof obj.expiresAt === 'number'
+  },
+  loadCred() {
+    if (!storage) {
+      return
+    }
+    storage.get({
+      key: 'offline_cred',
+      success: (data) => {
+        try {
+          const obj = typeof data === 'string' ? JSON.parse(data) : data
+          if (this.validCred(obj)) {
+            this.cred = obj
+            this.signBtnLabel = '生成离线码'
+            if (this.qrPath === '') {
+              this.qrHint = '点按下方按钮生成离线码'
+            }
+          }
+        } catch (e) {}
+      },
+      fail: () => {}
+    })
+  },
+  clearCred() {
+    this.cred = null
+    this.signJob = null
+    this.signing = false
+    if (storage) {
+      try {
+        storage.delete({ key: 'offline_cred' })
+      } catch (e) {}
+    }
+    this.qrPath = ''
+    this.qrHint = '未授权，请在手机端开启同步离线支付凭证'
+    this.signBtnLabel = '同步授权'
+    this.qrMeta = ''
+    this.log('离线凭证已清除')
+  },
+  saveCred(msg) {
+    if (!this.validCred(msg)) {
+      this.qrHint = '凭证数据无效，请重新同步'
+      this.signBtnLabel = '同步授权'
+      this.log('凭证数据无效，已拒收')
+      return
+    }
+    this.cred = msg
+    this.signBtnLabel = '生成离线码'
+    this.qrHint = '点按下方按钮生成离线码'
+    this.qrMeta = this.credExpiryText()
+    if (storage) {
+      try {
+        storage.set({ key: 'offline_cred', value: JSON.stringify(msg) })
+      } catch (e) {}
+    }
+    this.log('离线凭证已同步')
+  },
+  requestOfflineCred() {
+    if (!this.conn) {
+      return
+    }
+    this.qrHint = '正在同步离线凭证…'
+    this.conn.send({
+      data: { t: 'offline.cred.req' },
+      success: () => {
+        this.log('正在同步离线凭证…')
+      },
+      fail: (data, code) => {
+        this.setConnected(false)
+        this.qrHint = '凭证请求失败 code=' + code
+        this.log('凭证请求失败 code=' + code)
+      }
+    })
+  },
+  qrAction() {
+    if (this.signing) {
+      return
+    }
+    if (!this.cred) {
+      this.requestOfflineCred()
+      return
+    }
+    this.signLocal()
+  },
+  signLocal() {
+    const cred = this.cred
+    if (!cred || this.signing) {
+      return
+    }
+    const nowSec = Math.floor(Date.now() / 1000)
+    if (this.credExpired()) {
+      this.qrHint = '离线授权已过期，请在手机续期'
+      this.qrMeta = this.credExpiryText()
+      this.log('离线授权已过期')
+      return
+    }
+    let messageHex
+    let job
+    try {
+      messageHex = String(cred.authorInfo).toUpperCase() +
+        this.timeCrcHex(cred.checksum, nowSec)
+      job = ensureCrypto().sm2.makeSignJob({
+        privateKeyHex: cred.privateKey,
+        publicKeyXHex: cred.pubX,
+        publicKeyYHex: cred.pubY,
+        message: this.hexToBytes(messageHex)
+      })
+    } catch (e) {
+      this.qrHint = '凭证数据无效，请重新同步'
+      this.log('签名准备失败: ' + e)
+      return
+    }
+    this.signing = true
+    this.signJob = job
+    this.signCount = 0
+    this.signMessageHex = messageHex
+    this.signStartedAt = Date.now()
+    this.signBtnLabel = '签名中…'
+    this.signLabel = '本地签名中…'
+    this.qrPath = ''
+    this.qrHint = ''
+    this.qrMeta = ''
+    this.log('开始本地签名')
+    this.signStep()
+  },
+  signStep() {
+    const job = this.signJob
+    if (!job) {
+      return
+    }
+    // 时间预算内连续求值：真机 9s 里绝大部分是每步一次 setTimeout + 进度重绘的开销
+    //（QuickJS 标定全管线计算仅 ~46ms）。预算 40ms 让单次同步块有上界，
+    // 又能在 1~2 个滴答内跑完 31 步。
+    const deadline = Date.now() + 40
+    let finished = false
+    try {
+      do {
+        finished = job.step()
+        this.signCount += 1
+      } while (!finished && Date.now() < deadline)
+    } catch (e) {
+      this.signJob = null
+      this.finishSignError('签名失败: ' + e)
+      return
+    }
+    this.signLabel = '本地签名中 ' + this.signCount + '步'
+    if (!finished) {
+      this.later(() => {
+        this.signStep()
+      }, 0)
+      return
+    }
+    const sig = job.result()
+    this.signJob = null
+    if (!sig) {
+      this.finishSignError('签名失败，请重试')
+      return
+    }
+    // 收尾工作分到独立滴答执行，避免长同步块冻结手环。
+    this.signLabel = '正在生成二维码…'
+    this.later(() => {
+      this.buildQrImage(sig)
+    }, 0)
+  },
+  buildQrImage(sig) {
+    let png
+    try {
+      const payload = this.hexToBytes(this.signMessageHex + sig)
+      const qr = ensureCrypto().qr.encodeQr(payload)
+      png = ensureCrypto().png.qrToPng(qr)
+    } catch (e) {
+      this.log('二维码生成失败: ' + e)
+      this.finishSignError('二维码失败: ' + e)
+      return
+    }
+    this.writeQrBytes(png)
+  },
+  writeQrBytes(bytes) {
+    this.writeQrFile(bytes, (uri) => {
+      // 签名期间收到凭证清除指令：丢弃这次结果，保持未授权状态。
+      if (!this.cred) {
+        return
+      }
+      this.qrPath = uri
+      this.signing = false
+      this.signBtnLabel = '重新生成'
+      this.qrHint = ''
+      const secs = Math.round((Date.now() - this.signStartedAt) / 1000)
+      const now = new Date()
+      this.qrMeta = '生成于 ' + pad2(now.getHours()) + ':' + pad2(now.getMinutes()) + ' · 耗时' + secs + 's'
+      this.log('离线码已生成 耗时' + secs + 's')
+    }, (code) => {
+      this.finishSignError('写入二维码失败 ' + code)
+    })
+  },
+  finishSignError(msg) {
+    this.signing = false
+    this.signBtnLabel = '重试'
+    this.signLabel = ''
+    this.qrHint = msg
+    this.qrMeta = ''
+    this.log(msg)
+  },
+  timeCrcHex(checksum, seconds) {
+    const b = [
+      (seconds >>> 24) & 0xff,
+      (seconds >>> 16) & 0xff,
+      (seconds >>> 8) & 0xff,
+      seconds & 0xff
+    ]
+    let x = (checksum || 0) & 0xff
+    for (let i = 0; i < 4; i++) {
+      x = x ^ b[i]
+    }
+    return this.bytesToHex(b.concat([x])).toUpperCase()
+  },
+  hexToBytes(hex) {
+    const out = []
+    for (let i = 0; i < hex.length; i += 2) {
+      out.push(parseInt(hex.substring(i, i + 2), 16))
+    }
+    return out
+  },
+  bytesToHex(bytes) {
+    let s = ''
+    for (let i = 0; i < bytes.length; i++) {
+      s += ('0' + (bytes[i] & 0xff).toString(16)).slice(-2)
+    }
+    return s
+  },
+  log(msg) {
+    // 运行时日志走内存字段，避免 console 输出拖慢热路径（启动优化）。
+    this.logText = msg
+  },
+  later(fn, ms) {
+    const id = setTimeout(() => {
+      const i = this.timers.indexOf(id)
+      if (i >= 0) {
+        this.timers.splice(i, 1)
+      }
+      fn()
+    }, ms)
+    this.timers.push(id)
+  },
+  clearTimers() {
+    const list = this.timers || []
+    this.timers = []
+    for (let i = 0; i < list.length; i++) {
+      try {
+        clearTimeout(list[i])
+      } catch (e) {}
+    }
+  },
+  maybeGC() {
+    try {
+      if (typeof global !== 'undefined' && global.runGC) {
+        global.runGC()
+      }
+    } catch (e) {}
+  }
+}
+</script>
