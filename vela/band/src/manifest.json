@@ -1,8 +1,8 @@
 {
   "package": "club.geekpie.techpie",
   "name": "TechPie",
-  "versionName": "0.15.31",
-  "versionCode": 79,
+  "versionName": "1.0.0",
+  "versionCode": 100,
   "minPlatformVersion": 1200,
   "icon": "/common/logo.png",
   "deviceTypeList": [

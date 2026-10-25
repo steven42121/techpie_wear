@@ -31,7 +31,7 @@ def rsa_verify(data: bytes, sig: bytes, cert_der: bytes) -> bool:
                            capture_output=True)
         return r.returncode == 0
 
-def verify(rpk_path):
+def verify(rpk_path, expected_cert=None):
     data = open(rpk_path, 'rb').read()
     ok = True
 
@@ -154,16 +154,19 @@ def verify(rpk_path):
     # cert check
     fp = hashlib.sha256(cert_der).hexdigest()
     print('embedded cert sha256:', fp)
-    with open('/home/steven/文档/Dev/techpie/vela_app/sign/debug/certificate.pem', 'rb') as f:
+    if expected_cert:
         import base64
-        pem = f.read()
+        with open(expected_cert, 'rb') as f:
+            pem = f.read()
         der = base64.b64decode(b''.join(l for l in pem.splitlines() if b'-----' not in l))
-    same = der == cert_der
-    print('matches vela_app/sign/debug/certificate.pem:', 'OK' if same else 'FAIL')
-    ok = ok and same
+        same = der == cert_der
+        print(f'matches {expected_cert}:', 'OK' if same else 'FAIL')
+        ok = ok and same
+    else:
+        print('cert comparison skipped (pass a certificate.pem path to compare)')
 
     print('\nRESULT:', 'ALL SIGNATURE CHECKS PASSED' if ok else 'VERIFICATION FAILED')
     return 0 if ok else 1
 
 if __name__ == '__main__':
-    sys.exit(verify(sys.argv[1]))
+    sys.exit(verify(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else None))

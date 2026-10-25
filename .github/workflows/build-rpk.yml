@@ -1,0 +1,103 @@
+name: Build RPK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'vela/**'
+      - '.github/workflows/build-rpk.yml'
+  pull_request:
+    paths:
+      - 'vela/**'
+      - '.github/workflows/build-rpk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: band
+            output: xiaomi_band.rpk
+          - project: band_pro
+            output: xiaomi_band_pro.rpk
+          - project: circle_watch
+            output: xiaomi_circle_band.rpk
+    name: ${{ matrix.output }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: vela/${{ matrix.project }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: vela/${{ matrix.project }}
+        run: npm ci --no-audit --no-fund
+
+      - name: Restore signing keys
+        id: sign
+        working-directory: vela/${{ matrix.project }}
+        env:
+          SIGN_CERTIFICATE_PEM: ${{ secrets.SIGN_CERTIFICATE_PEM }}
+          SIGN_PRIVATE_PEM: ${{ secrets.SIGN_PRIVATE_PEM }}
+        run: |
+          if [ -n "$SIGN_PRIVATE_PEM" ] && [ -n "$SIGN_CERTIFICATE_PEM" ]; then
+            mkdir -p sign/debug sign/release
+            printf '%s\n' "$SIGN_CERTIFICATE_PEM" | tee sign/debug/certificate.pem > sign/release/certificate.pem
+            printf '%s\n' "$SIGN_PRIVATE_PEM" | tee sign/debug/private.pem > sign/release/private.pem
+            echo "key=app" >> "$GITHUB_OUTPUT"
+            echo "signed with the app debug key (APK pairing preserved)"
+          else
+            echo "key=toolkit" >> "$GITHUB_OUTPUT"
+            echo "::notice::SIGN_CERTIFICATE_PEM / SIGN_PRIVATE_PEM secrets are not set - the rpk is signed with the aiot-toolkit default debug key and will NOT match the companion APK"
+          fi
+
+      # debug 签名（sign/debug 密钥）与手机端 APK 配对，换 release 签名需连 APK 一起重签
+      - name: Build
+        working-directory: vela/${{ matrix.project }}
+        run: npm run build
+
+      - name: Collect artifact
+        run: |
+          shopt -s nullglob
+          rpks=(vela/${{ matrix.project }}/dist/*.rpk)
+          if [ ${#rpks[@]} -ne 1 ]; then
+            echo "::error::expected exactly one rpk in dist/, found: ${rpks[*]}"
+            exit 1
+          fi
+          mv "${rpks[0]}" "${{ matrix.output }}"
+          ls -l "${{ matrix.output }}"
+
+      - name: Verify RPK signature
+        run: |
+          if [ "${{ steps.sign.outputs.key }}" = "app" ]; then
+            python3 vela/${{ matrix.project }}/tool/verify_rpk.py "${{ matrix.output }}" vela/${{ matrix.project }}/sign/debug/certificate.pem
+          else
+            python3 vela/${{ matrix.project }}/tool/verify_rpk.py "${{ matrix.output }}"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: ${{ matrix.output }}
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: '*.rpk'
+          generate_release_notes: true
