@@ -1,6 +1,6 @@
 # TechPie Wear
 
-TechPie 穿戴端仓库，面向**所有穿戴设备**（不限于小米），后续会接入更多平台与厂商。当前包含 Xiaomi Vela 快应用实现：一套源码、多个设备目标，通过 GitHub Actions 打包出可安装的 RPK。
+TechPie 穿戴端仓库，面向所有穿戴设备，后续会接入更多平台与厂商。当前包含 Xiaomi Vela 快应用实现：一套源码、多个设备目标，通过 GitHub Actions 打包出可安装的 RPK。
 
 ## 项目结构
 
